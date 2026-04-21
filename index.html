@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClipTube (Bypass Edition)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* CSS remains largely the same, adding styling for the custom video player */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f0f;
+  --surface:#212121;
+  --surface2:#272727;
+  --surface3:#333;
+  --text:#f1f1f1;
+  --text2:#aaa;
+  --text3:#666;
+  --border:#333;
+  --red:#ff0000;
+  --red2:#cc0000;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Roboto',sans-serif;font-size:14px}
+
+.header{
+  display:flex;align-items:center;gap:16px;
+  padding:8px 20px;height:56px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:200;
+}
+.logo{display:flex;align-items:center;gap:6px;font-size:17px;font-weight:700;color:var(--text);white-space:nowrap;cursor:pointer}
+.logo svg{width:90px;height:20px}
+.search-wrap{flex:1;display:flex;justify-content:center}
+.search-form{display:flex;width:100%;max-width:600px}
+.search-form input{
+  flex:1;padding:8px 16px;
+  border:1px solid #444;border-right:none;
+  border-radius:40px 0 0 40px;
+  background:#121212;color:var(--text);font-size:15px;outline:none;
+}
+.search-form input:focus{border-color:#aaa}
+.search-form input::placeholder{color:var(--text3)}
+.search-btn{
+  padding:8px 20px;
+  background:var(--surface2);
+  border:1px solid #444;border-left:none;
+  border-radius:0 40px 40px 0;
+  cursor:pointer;color:var(--text2);font-size:18px;
+  transition:background 0.15s;
+}
+.search-btn:hover{background:var(--surface3)}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.icon-btn{width:40px;height:40px;border-radius:50%;background:none;border:none;cursor:pointer;color:var(--text2);font-size:18px;display:flex;align-items:center;justify-content:center;transition:background 0.15s}
+.icon-btn:hover{background:var(--surface2)}
+.avatar{width:32px;height:32px;border-radius:50%;background:#ff6b35;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;cursor:pointer}
+
+.chips-wrap{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:56px;z-index:190;padding:0 20px}
+.chips{display:flex;gap:8px;padding:10px 0;overflow-x:auto}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  padding:6px 14px;border-radius:40px;
+  background:var(--surface2);border:none;
+  font-size:13px;cursor:pointer;white-space:nowrap;
+  color:var(--text);transition:background 0.15s;font-family:inherit;
+}
+.chip:hover{background:var(--surface3)}
+.chip.active{background:var(--text);color:var(--bg)}
+
+.layout{display:flex;min-height:calc(100vh - 106px)}
+
+.sidebar{
+  width:240px;min-width:240px;
+  padding:8px 0;
+  background:var(--bg);
+  position:sticky;top:106px;
+  height:calc(100vh - 106px);
+  overflow-y:auto;
+}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px}
+.nav-item{
+  display:flex;align-items:center;gap:20px;
+  padding:10px 20px;font-size:13px;cursor:pointer;
+  color:var(--text);border-radius:10px;margin:0 8px;
+  transition:background 0.1s;
+}
+.nav-item:hover{background:var(--surface2)}
+.nav-item.active{background:var(--surface2);font-weight:500}
+.nav-icon{font-size:20px;width:24px;text-align:center}
+.nav-divider{height:1px;background:var(--border);margin:8px 0}
+.nav-section{padding:12px 20px 4px;font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em}
+
+.main{flex:1;padding:20px;min-width:0}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px}
+.video-card{cursor:pointer;border-radius:10px;overflow:hidden;transition:transform 0.15s}
+.video-card:hover .thumb-wrap img{transform:scale(1.03)}
+.thumb-wrap{
+  position:relative;width:100%;padding-top:56.25%;
+  background:var(--surface2);overflow:hidden;border-radius:10px;
+}
+.thumb-wrap img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transition:transform 0.3s}
+.duration{
+  position:absolute;bottom:6px;right:6px;
+  background:rgba(0,0,0,0.88);color:white;
+  font-size:12px;padding:2px 6px;border-radius:4px;font-weight:500;
+}
+.card-info{display:flex;gap:12px;padding:10px 2px}
+.ch-av{width:36px;height:36px;min-width:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white}
+.card-text{flex:1;min-width:0}
+.card-title{font-size:14px;font-weight:500;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--text)}
+.card-meta{font-size:12px;color:var(--text2);margin-top:4px}
+
+#playerView{display:none}
+.back-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:14px;cursor:pointer;color:var(--text2);
+  background:none;border:none;padding:0;margin-bottom:16px;
+  font-family:inherit;transition:color 0.15s;
+}
+.back-btn:hover{color:var(--text)}
+
+.player-layout{display:flex;gap:24px;align-items:flex-start}
+.player-col{flex:1;min-width:0}
+
+.player-box{
+  width:100%;padding-top:56.25%;position:relative;
+  background:#000;border-radius:12px;overflow:hidden;
+}
+/* CUSTOM VIDEO TAG FOR BYPASS */
+.player-box video{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+
+.video-title-big{font-size:20px;font-weight:700;margin:16px 0 8px;line-height:1.35;color:var(--text)}
+.meta-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.meta-views{font-size:13px;color:var(--text2)}
+.action-btns{display:flex;gap:6px;flex-wrap:wrap}
+.act-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 16px;background:var(--surface2);
+  border:none;border-radius:40px;font-size:13px;
+  cursor:pointer;color:var(--text);font-family:inherit;
+  transition:background 0.15s;
+}
+.act-btn:hover{background:var(--surface3)}
+.act-btn.liked{background:#263850;color:#4fc3f7}
+
+.channel-strip{display:flex;align-items:center;gap:12px;margin-top:16px}
+.ch-av-lg{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white;flex-shrink:0}
+.ch-name{font-size:15px;font-weight:500}
+.ch-subs{font-size:12px;color:var(--text2)}
+.sub-btn{
+  margin-left:auto;padding:9px 20px;
+  background:var(--text);color:var(--bg);
+  border:none;border-radius:40px;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:opacity 0.15s;
+}
+.sub-btn:hover{opacity:0.85}
+.sub-btn.subbed{background:var(--surface2);color:var(--text)}
+
+.desc-box{
+  background:var(--surface2);border-radius:10px;
+  padding:14px 16px;margin-top:16px;font-size:13px;line-height:1.7;
+  cursor:pointer;color:var(--text);
+}
+.desc-box .short{font-weight:500;color:var(--text2);margin-bottom:4px}
+.desc-box .full{display:none;margin-top:8px;white-space:pre-wrap;word-break:break-word}
+.desc-box.open .full{display:block}
+.desc-box.open .more-lbl{display:none}
+.more-lbl{font-size:13px;font-weight:500;margin-top:6px;color:var(--text)}
+
+.comments-wrap{margin-top:24px}
+.comments-hdr{font-size:16px;font-weight:500;margin-bottom:16px}
+.cmt{display:flex;gap:12px;margin-bottom:18px}
+.cmt-av{width:34px;height:34px;min-width:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0}
+.cmt-author{font-size:13px;font-weight:500}
+.cmt-text{font-size:13px;color:#ccc;margin-top:3px;line-height:1.5;word-break:break-word}
+.cmt-meta{font-size:12px;color:var(--text2);margin-top:4px}
+
+.recs-col{width:400px;min-width:360px;flex-shrink:0}
+.recs-hdr{font-size:15px;font-weight:500;margin-bottom:14px}
+.rec{display:flex;gap:8px;margin-bottom:10px;cursor:pointer;border-radius:8px;padding:6px;transition:background 0.12s}
+.rec:hover{background:var(--surface2)}
+.rec-thumb{width:168px;height:94px;border-radius:8px;overflow:hidden;background:var(--surface2);position:relative;flex-shrink:0}
+.rec-thumb img{width:100%;height:100%;object-fit:cover}
+.rec-thumb .duration{font-size:11px}
+.rec-info{flex:1;min-width:0;padding:2px 0}
+.rec-title{font-size:13px;font-weight:500;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--text)}
+.rec-ch{font-size:12px;color:var(--text2);margin-top:5px}
+
+.loading{display:flex;justify-content:center;align-items:center;padding:80px;gap:12px;flex-direction:column}
+.spinner{width:40px;height:40px;border:3px solid var(--surface3);border-top-color:var(--red);border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:80px 20px;color:var(--text2)}
+.empty .ico{font-size:48px;margin-bottom:12px}
+.err-banner{background:#2a0f0f;border:1px solid #5a1f1f;border-radius:10px;padding:14px 18px;font-size:13px;color:#ff8a80;margin-bottom:16px}
+
+.note{background:#1a222a;border:1px solid #2e455c;border-radius:10px;padding:10px 16px;font-size:12px;color:#81c7f4;margin-bottom:16px;line-height:1.5}
+
+@media(max-width:900px){.sidebar{display:none}.recs-col{display:none}}
+@media(max-width:600px){.main{padding:12px}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo" onclick="goHome()">
+    <svg viewBox="0 0 90 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="28" height="20" rx="5" fill="#ff0000"/>
+      <polygon points="11,5 21,10 11,15" fill="white"/>
+      <text x="33" y="15" font-family="Roboto,sans-serif" font-weight="700" font-size="14" fill="#f1f1f1">ClipTube</text>
+    </svg>
+  </div>
+  <div class="search-wrap">
+    <div class="search-form">
+      <input id="searchInput" type="text" placeholder="Search videos..." />
+      <button class="search-btn" onclick="doSearch()">🔍</button>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" title="Notifications">🔔</button>
+    <div class="avatar">U</div>
+  </div>
+</div>
+
+<div class="chips-wrap">
+  <div class="chips" id="chipsBar">
+    <button class="chip active" onclick="selectChip(this,'')">All</button>
+    <button class="chip" onclick="selectChip(this,'music')">Music</button>
+    <button class="chip" onclick="selectChip(this,'gaming')">Gaming</button>
+    <button class="chip" onclick="selectChip(this,'news')">News</button>
+    <button class="chip" onclick="selectChip(this,'sports')">Sports</button>
+    <button class="chip" onclick="selectChip(this,'technology')">Technology</button>
+    <button class="chip" onclick="selectChip(this,'cooking')">Cooking</button>
+    <button class="chip" onclick="selectChip(this,'travel')">Travel</button>
+    <button class="chip" onclick="selectChip(this,'comedy')">Comedy</button>
+    <button class="chip" onclick="selectChip(this,'science')">Science</button>
+    <button class="chip" onclick="selectChip(this,'fitness')">Fitness</button>
+    <button class="chip" onclick="selectChip(this,'anime')">Anime</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="nav-item active" onclick="goHome()"><span class="nav-icon">🏠</span>Home</div>
+    <div class="nav-item" onclick="selectChipByTopic('shorts')"><span class="nav-icon">⚡</span>Shorts</div>
+    <div class="nav-item"><span class="nav-icon">📺</span>Subscriptions</div>
+    <div class="nav-divider"></div>
+    <div class="nav-item"><span class="nav-icon">📚</span>Library</div>
+    <div class="nav-item"><span class="nav-icon">🕐</span>History</div>
+    <div class="nav-item"><span class="nav-icon">👍</span>Liked videos</div>
+    <div class="nav-item"><span class="nav-icon">⬇️</span>Downloads</div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">Explore</div>
+    <div class="nav-item" onclick="selectChipByTopic('trending')"><span class="nav-icon">🔥</span>Trending</div>
+    <div class="nav-item" onclick="selectChipByTopic('music')"><span class="nav-icon">🎵</span>Music</div>
+    <div class="nav-item" onclick="selectChipByTopic('gaming')"><span class="nav-icon">🎮</span>Gaming</div>
+    <div class="nav-item" onclick="selectChipByTopic('news')"><span class="nav-icon">📰</span>News</div>
+    <div class="nav-item" onclick="selectChipByTopic('sports')"><span class="nav-icon">🏆</span>Sports</div>
+    <div class="nav-item" onclick="selectChipByTopic('technology')"><span class="nav-icon">💻</span>Technology</div>
+    <div class="nav-divider"></div>
+    <div style="padding:12px 20px;font-size:11px;color:var(--text3);line-height:1.6">
+      About · Press · Copyright<br>Contact · Creators<br>Advertise · Developers<br><br>
+      Privacy · Terms · Settings<br>
+      © 2025 ClipTube
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="homeView">
+      <div id="errEl" style="display:none"></div>
+      <div class="grid" id="videoGrid"></div>
+      <div id="loadingEl" class="loading" style="display:none">
+        <div class="spinner"></div>
+        <div style="color:var(--text2);font-size:13px">Loading videos...</div>
+      </div>
+      <div id="stateEl" class="empty" style="display:none">
+        <div class="ico">📺</div>
+        <div>No videos found</div>
+      </div>
+    </div>
+
+    <div id="playerView">
+      <button class="back-btn" onclick="goHome()">
+        ← Back to home
+      </button>
+      <div id="playerArea"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// We use a public Invidious instance to proxy requests and bypass the IP block
+const PROXY_INSTANCE = 'https://yewtu.be'; 
+const API_BASE = `${PROXY_INSTANCE}/api/v1`;
+let currentTopic = '', nextPageToken = '', liked = {};
+
+const COLORS = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63','#00bcd4','#8bc34a','#d35400','#16a085'];
+function chColor(n){let h=0;for(const c of(n||''))h=(h*31+c.charCodeAt(0))%COLORS.length;return COLORS[h];}
+function ini(n){return(n||'?').split(/\s+/).map(w=>w[0]||'').join('').substring(0,2).toUpperCase()||'?';}
+function fmtN(n){if(!n)return'';n=parseInt(n);if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1000)return Math.round(n/1000)+'K';return n.toLocaleString();}
+function fmtD(s){if(!s)return'';let mn=Math.floor(s/60),sec=s%60;return `${mn}:${sec<10?'0':''}${sec}`;}
+function fmtAgo(v){if(!v)return'';let n=Math.floor(Date.now()/1000)-v;if(n<60)return n+'s ago';if(n<3600)return Math.floor(n/60)+'m ago';if(n<86400)return Math.floor(n/3600)+'h ago';return Math.floor(n/86400)+'d ago';}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+async function loadVideos(reset=true){
+  if(reset){nextPageToken='';document.getElementById('videoGrid').innerHTML='';}
+  document.getElementById('errEl').style.display='none';
+  document.getElementById('stateEl').style.display='none';
+  document.getElementById('loadingEl').style.display='flex';
+
+  const q=document.getElementById('searchInput').value.trim();
+  try{
+    // Fetching from Invidious API instead of Google to bypass the block
+    let url = q || currentTopic 
+      ? `${API_BASE}/search?q=${encodeURIComponent(q || currentTopic)}&page=1` 
+      : `${API_BASE}/trending`;
+      
+    const items = await(await fetch(url)).json();
+    if(items.error){showErr(items.error);return;}
+    renderCards(items,reset);
+    if(!items.length)document.getElementById('stateEl').style.display='';
+  }catch(e){showErr('Bypass error — instance might be down. '+e.message);}
+  document.getElementById('loadingEl').style.display='none';
+}
+
+function showErr(msg){
+  document.getElementById('loadingEl').style.display='none';
+  const el=document.getElementById('errEl');
+  el.className='err-banner';el.textContent='⚠️ '+msg;el.style.display='';
+}
+
+function renderCards(items,reset){
+  const grid=document.getElementById('videoGrid');
+  if(reset)grid.innerHTML='';
+  items.forEach(v=>{
+    const thumb=v.videoThumbnails?.[0]?.url || '';
+    const col=chColor(v.author);
+    const card=document.createElement('div');
+    card.className='video-card';
+    card.innerHTML=`
+      <div class="thumb-wrap">
+        ${thumb?`<img src="${thumb}" loading="lazy" alt="${esc(v.title)}">`:''}
+        <span class="duration">${fmtD(v.lengthSeconds)}</span>
+      </div>
+      <div class="card-info">
+        <div class="ch-av" style="background:${col}">${ini(v.author)}</div>
+        <div class="card-text">
+          <div class="card-title">${esc(v.title)}</div>
+          <div class="card-meta">${esc(v.author)} • ${fmtN(v.viewCount)} views • ${v.publishedText}</div>
+        </div>
+      </div>`;
+    card.onclick=()=>openVideo(v.videoId, v);
+    grid.appendChild(card);
+  });
+}
+
+async function openVideo(videoId, vData){
+  document.getElementById('homeView').style.display='none';
+  document.getElementById('playerView').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('playerArea').innerHTML=`<div class="loading"><div class="spinner"></div><div style="color:var(--text2);font-size:13px">Bypassing block...</div></div>`;
+
+  try{
+    // Fetch full video data from Invidious
+    const d = await(await fetch(`${API_BASE}/videos/${videoId}`)).json();
+    const col=chColor(d.author);
+    const isLiked=!!liked[videoId];
+    
+    // We use local=true to proxy the stream through yewtu.be so it bypasses your IP block
+    const streamUrl = `${PROXY_INSTANCE}/latest_version?id=${videoId}&local=true`;
+
+    let recsHtml='';
+    (d.recommendedVideos||[]).forEach(rv=>{
+      recsHtml+=`<div class="rec" onclick="openVideo('${rv.videoId}')">
+        <div class="rec-thumb">
+          <img src="${rv.videoThumbnails[0].url}" loading="lazy" alt="">
+          <span class="duration">${fmtD(rv.lengthSeconds)}</span>
+        </div>
+        <div class="rec-info">
+          <div class="rec-title">${esc(rv.title)}</div>
+          <div class="rec-ch">${esc(rv.author)}</div>
+          <div class="rec-ch">${fmtN(rv.viewCount)} views</div>
+        </div>
+      </div>`;
+    });
+
+    document.getElementById('playerArea').innerHTML=`
+      <div class="note">
+        🚀 <strong>Bypass Active:</strong> Using ${PROXY_INSTANCE} to proxy this stream. Traffic to youtube.com is currently disabled.
+      </div>
+      <div class="player-layout">
+        <div class="player-col">
+          <div class="player-box">
+            <video controls autoplay poster="${d.videoThumbnails[0].url}">
+              <source src="${streamUrl}" type="video/mp4">
+            </video>
+          </div>
+
+          <h1 class="video-title-big">${esc(d.title)}</h1>
+          <div class="meta-row">
+            <span class="meta-views">${fmtN(d.viewCount)} views • ${d.publishedText}</span>
+            <div class="action-btns">
+              <button class="act-btn ${isLiked?'liked':''}" id="likeBtn" onclick="toggleLike('${videoId}')">
+                👍 ${isLiked?'Liked':'Like'}
+              </button>
+              <button class="act-btn">👎</button>
+              <button class="act-btn">↗ Share</button>
+              <button class="act-btn">⬇ Save</button>
+            </div>
+          </div>
+
+          <div class="channel-strip">
+            <div class="ch-av-lg" style="background:${col}">${ini(d.author)}</div>
+            <div>
+              <div class="ch-name">${esc(d.author)}</div>
+              <div class="ch-subs">${d.subCountText || ''}</div>
+            </div>
+            <button class="sub-btn" id="subBtn" onclick="toggleSub(this)">Subscribe</button>
+          </div>
+
+          <div class="desc-box" id="descBox" onclick="document.getElementById('descBox').classList.toggle('open')">
+            <div class="short">${d.publishedText} • ${fmtN(d.viewCount)} views</div>
+            <div class="full">${esc(d.description).replace(/\n/g,'<br>')}</div>
+            <div class="more-lbl">...more</div>
+          </div>
+        </div>
+
+        <div class="recs-col">
+          <div class="recs-hdr">Up next</div>
+          ${recsHtml||'<div style="color:var(--text2);font-size:13px">No recommendations found</div>'}
+        </div>
+      </div>`;
+  }catch(e){showErr('Failed to bypass block: '+e.message);}
+}
+
+function toggleLike(vid){
+  liked[vid]=!liked[vid];
+  const btn=document.getElementById('likeBtn');
+  if(btn){btn.classList.toggle('liked',liked[vid]);btn.innerHTML=liked[vid]?'👍 Liked':'👍 Like';}
+}
+function toggleSub(btn){
+  const subbed=btn.classList.toggle('subbed');
+  btn.textContent=subbed?'Subscribed':'Subscribe';
+}
+
+function goHome(){
+  document.getElementById('homeView').style.display='';
+  document.getElementById('playerView').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function doSearch(){
+  currentTopic='';
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  document.querySelector('.chip').classList.add('active');
+  loadVideos();
+}
+
+document.getElementById('searchInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter')doSearch();
+});
+
+function selectChip(el,topic){
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  currentTopic=topic;
+  document.getElementById('searchInput').value='';
+  loadVideos();
+}
+function selectChipByTopic(topic){
+  currentTopic=topic;
+  document.getElementById('searchInput').value='';
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  loadVideos();
+}
+
+loadVideos();
+</script>
+</body>
+</html>
